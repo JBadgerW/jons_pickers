@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jons_pickers"
+version = "0.1.0"
+description = "My custom terminal-based file and object pickers"
+readme = "README.md"
+requires-python = ">=3.7"
+dependencies = [
+    "cursor",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
