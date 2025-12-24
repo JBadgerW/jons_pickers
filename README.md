@@ -3,9 +3,11 @@ Jon's File Picker and Object Picker Readme
 
 ## Description
 
-A very basic terminal-based file picker with two modes, multi-file and
-single-file. Its behavior attempts to mimic both the bash Tab autocomplete and
-also the auto-filtering behavior I saw in the Fresh text editor.
+This is a very basic terminal-based file picker with two modes, multi-file and
+single-file, designed as a drop-in component to my Python scripts. I've tried to
+make it the modules as self-contained as possible so it's easy to add to your own
+programs.  Its behavior attempts to mimic both the bash Tab autocomplete and also
+the auto-filtering behavior I saw in the Fresh text editor.
 
 I work in Linux, so I've tested file_picker and it works with the Linux
 filesystem, but I don't know how it will perform in Windows or Mac.
@@ -31,5 +33,9 @@ my_files = file_picker(
     prompt="File: "
 )
 
-my_objects = object_picker(list_of_objects, multi=True)
+my_objects = object_picker(
+    list_of_objects, 
+    multi=True,
+    prompt="Select: "
+)
 ```
