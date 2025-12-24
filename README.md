@@ -20,6 +20,7 @@ objects back in a list.
 
 ## Usage
 
+```
 from jons_pickers import file_picker
 from jons_pickers import object_picker
 
@@ -30,3 +31,4 @@ my_files = file_picker(
 )
 
 my_objects = object_picker(list_of_objects, multi=True)
+```
