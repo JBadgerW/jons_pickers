@@ -6,7 +6,7 @@ from pathlib import Path
 def _file_picker_ui(stdscr, start_dir, multi, prompt):
     """Internal curses UI function."""
     def first_match_index():
-        for i, (p, _) in enumerate(display):
+        for i, (p, _, _) in enumerate(display):
             if p.name != "..":
                 return i
         return 0
@@ -18,6 +18,7 @@ def _file_picker_ui(stdscr, start_dir, multi, prompt):
     curses.use_default_colors()
     curses.init_pair(1, curses.COLOR_WHITE, -1)
     curses.init_pair(2, curses.COLOR_CYAN, -1)  # Cyan for directories
+    curses.init_pair(3, 8, -1)  # Gray for non-matches (color 8 is typically bright black/gray)
 
     stdscr.bkgd(" ", curses.color_pair(1))
     stdscr.clear()
@@ -52,13 +53,19 @@ def _file_picker_ui(stdscr, start_dir, multi, prompt):
         def matches(name: str) -> bool:
             return query.lower() in name.lower()
 
+        # Build display with match status
         display = []
         if cwd.parent != cwd:
-            display.append((Path(".."), True))
-        display += (
-            [(p, True) for p in dirs if matches(p.name)] +
-            [(p, False) for p in files if matches(p.name)]
-        )
+            display.append((Path(".."), True, True))  # (path, is_dir, is_match)
+        
+        # Separate matches and non-matches
+        matching_dirs = [(p, True, True) for p in dirs if matches(p.name)]
+        matching_files = [(p, False, True) for p in files if matches(p.name)]
+        non_matching_dirs = [(p, True, False) for p in dirs if not matches(p.name)]
+        non_matching_files = [(p, False, False) for p in files if not matches(p.name)]
+        
+        # Matches first, then non-matches
+        display += matching_dirs + matching_files + non_matching_dirs + non_matching_files
 
         if selected_idx >= len(display):
             selected_idx = max(0, len(display) - 1)
@@ -87,7 +94,7 @@ def _file_picker_ui(stdscr, start_dir, multi, prompt):
             prev_query = query
 
         # --- Draw file list ---
-        for i, (path, is_dir) in enumerate(visible):
+        for i, (path, is_dir, is_match) in enumerate(visible):
             y = list_top + i
             idx = scroll + i
 
@@ -97,9 +104,14 @@ def _file_picker_ui(stdscr, start_dir, multi, prompt):
             full_path = (cwd / path).resolve()
             attrs = 0
 
-            # Add cyan color for directories
-            if is_dir:
-                attrs |= curses.color_pair(2)
+            # Choose color based on match status and directory
+            if is_dir and is_match:
+                attrs |= curses.color_pair(2)  # Cyan for matching directories
+            elif is_dir and not is_match:
+                attrs |= curses.color_pair(3)  # Gray for non-matching directories
+            elif not is_match:
+                attrs |= curses.color_pair(3)  # Gray for non-matching files
+            # Otherwise use default white (color_pair 1) for matching files
             
             if idx == selected_idx or (multi and full_path in selected):
                 attrs |= curses.A_REVERSE
@@ -133,7 +145,7 @@ def _file_picker_ui(stdscr, start_dir, multi, prompt):
             selected_idx += 1
 
         elif key == '\t':  # TAB autocomplete (bash-style)
-            names = [p.name for p, _ in display if p.name != ".."]
+            names = [p.name for p, _, is_match in display if p.name != ".." and is_match]
             
             # Filter to items that start with query (prefix matches)
             prefix_matches = [n for n in names if n.lower().startswith(query.lower())]
@@ -160,7 +172,7 @@ def _file_picker_ui(stdscr, start_dir, multi, prompt):
             if not display:
                 continue
 
-            path, is_dir = display[selected_idx]
+            path, is_dir, is_match = display[selected_idx]
             target = (cwd / path).resolve()
 
             if is_dir:
@@ -176,7 +188,7 @@ def _file_picker_ui(stdscr, start_dir, multi, prompt):
                     return [str(target)]
 
         elif key == " " and multi:  # toggle selection
-            path, is_dir = display[selected_idx]
+            path, is_dir, is_match = display[selected_idx]
             if not is_dir:
                 target = (cwd / path).resolve()
                 if target in selected:
