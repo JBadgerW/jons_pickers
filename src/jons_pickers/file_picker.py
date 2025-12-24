@@ -17,6 +17,7 @@ def _file_picker_ui(stdscr, start_dir, multi, prompt):
     curses.start_color()
     curses.use_default_colors()
     curses.init_pair(1, curses.COLOR_WHITE, -1)
+    curses.init_pair(2, curses.COLOR_CYAN, -1)  # Cyan for directories
 
     stdscr.bkgd(" ", curses.color_pair(1))
     stdscr.clear()
@@ -96,6 +97,10 @@ def _file_picker_ui(stdscr, start_dir, multi, prompt):
             full_path = (cwd / path).resolve()
             attrs = 0
 
+            # Add cyan color for directories
+            if is_dir:
+                attrs |= curses.color_pair(2)
+            
             if idx == selected_idx or (multi and full_path in selected):
                 attrs |= curses.A_REVERSE
 
