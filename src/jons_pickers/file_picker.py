@@ -198,7 +198,10 @@ def _file_picker_ui(stdscr, start_dir, multi, prompt):
                 selected.clear()
             else:
                 if multi:
-                    return sorted(str(p) for p in selected) if selected else [str(target)]
+                    # Always include the currently highlighted file
+                    result_set = selected.copy()
+                    result_set.add(target)
+                    return sorted(str(p) for p in result_set)
                 else:
                     return [str(target)]
 
