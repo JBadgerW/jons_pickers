@@ -25,7 +25,7 @@ from jons_pickers import file_picker
 from jons_pickers import object_picker
 
 my_files = file_picker(
-    start_dir="home/cwd/whatever", 
+    start_dir="/home/cwd/whatever", 
     multi=True/False,
     prompt="File: "
 )
