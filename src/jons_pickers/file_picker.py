@@ -2,9 +2,8 @@ import curses
 from time import sleep
 from pathlib import Path
 
-PROMPT = "File: "
 
-def _file_picker_ui(stdscr, start_dir, multi):
+def _file_picker_ui(stdscr, start_dir, multi, prompt):
     """Internal curses UI function."""
     def first_match_index():
         for i, (p, _) in enumerate(display):
@@ -82,7 +81,7 @@ def _file_picker_ui(stdscr, start_dir, multi):
         if query != prev_query or prev_selected_idx is None:
             stdscr.move(1, 1)
             stdscr.clrtoeol()
-            prompt_line = f"{PROMPT}{cwd}/{query}"
+            prompt_line = f"{prompt}{cwd}/{query}"
             stdscr.addstr(1, 1, prompt_line[:w-2])  # Truncate to fit inside border
             prev_query = query
 
@@ -91,7 +90,7 @@ def _file_picker_ui(stdscr, start_dir, multi):
             y = list_top + i
             idx = scroll + i
 
-            name = path.name + ("/" if is_dir and path.name != ".." else "")
+            name = path.name + ("/" if is_dir else "")
             line = name[: w - 4]
 
             full_path = (cwd / path).resolve()
@@ -114,7 +113,7 @@ def _file_picker_ui(stdscr, start_dir, multi):
         curses.doupdate()  # update all at once
 
         # Keep cursor at input (clamped to terminal width)
-        cursor_x = 1 + len(PROMPT) + len(str(cwd)) + len(query) + 1
+        cursor_x = 1 + len(prompt) + len(str(cwd)) + len(query) + 1
         stdscr.move(1, min(cursor_x, w - 2))
 
         key = stdscr.get_wch()
@@ -191,7 +190,7 @@ def _file_picker_ui(stdscr, start_dir, multi):
             scroll = 0
 
 
-def file_picker(start_dir=None, multi=False):
+def file_picker(start_dir=None, multi=False, prompt="File: "):
     """
     Launch an interactive file picker.
     
@@ -202,7 +201,7 @@ def file_picker(start_dir=None, multi=False):
     Returns:
         List of selected file paths as strings, or None if cancelled
     """
-    return curses.wrapper(_file_picker_ui, start_dir, multi)
+    return curses.wrapper(_file_picker_ui, start_dir, multi, prompt)
 
 
 if __name__ == "__main__":
