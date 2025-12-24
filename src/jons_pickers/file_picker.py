@@ -1,5 +1,4 @@
 import curses
-from time import sleep
 from pathlib import Path
 
 
@@ -243,10 +242,8 @@ if __name__ == "__main__":
     print("SINGLE FILE PICKER")
     result = file_picker("~", multi=False)
     print(result)
-    sleep(2)
 
     # Multi file picker
     print("\nMULTI FILE PICKER")
     result = file_picker("~", multi=True)
     print(result)
-    sleep(2)
