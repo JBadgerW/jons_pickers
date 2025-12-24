@@ -24,6 +24,8 @@ def _file_picker_ui(stdscr, start_dir, multi, prompt):
     curses.init_pair(1, curses.COLOR_WHITE, -1)
     curses.init_pair(2, curses.COLOR_CYAN, -1)  # Cyan for directories
     curses.init_pair(3, 8, -1)  # Gray for non-matches (color 8 is typically bright black/gray)
+    curses.init_pair(4, curses.COLOR_WHITE, curses.COLOR_BLUE)  # White on blue for selected files
+    curses.init_pair(5, curses.COLOR_CYAN, curses.COLOR_BLUE)  # Cyan on blue for selected directories
 
     stdscr.bkgd(" ", curses.color_pair(1))
     stdscr.clear()
@@ -117,10 +119,18 @@ def _file_picker_ui(stdscr, start_dir, multi, prompt):
             line = name[: w - 4]
 
             full_path = (cwd / path).resolve()
+            is_selected = multi and full_path in selected
+            is_highlighted = idx == selected_idx
             attrs = 0
 
-            # Choose color based on match status and directory
-            if is_dir and is_match:
+            # Choose color based on selection and match status
+            if is_selected:
+                # Selected files get blue background
+                if is_dir:
+                    attrs |= curses.color_pair(5)  # Cyan on blue for selected directories
+                else:
+                    attrs |= curses.color_pair(4)  # White on blue for selected files
+            elif is_dir and is_match:
                 attrs |= curses.color_pair(2)  # Cyan for matching directories
             elif is_dir and not is_match:
                 attrs |= curses.color_pair(3)  # Gray for non-matching directories
@@ -128,7 +138,8 @@ def _file_picker_ui(stdscr, start_dir, multi, prompt):
                 attrs |= curses.color_pair(3)  # Gray for non-matching files
             # Otherwise use default white (color_pair 1) for matching files
             
-            if idx == selected_idx or (multi and full_path in selected):
+            # Add reverse video for highlighted item (works on top of any background)
+            if is_highlighted:
                 attrs |= curses.A_REVERSE
 
             stdscr.move(y, 3)  # Indent for border
