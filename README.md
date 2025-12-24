@@ -4,7 +4,7 @@ Jon's File Picker and Object Picker Readme
 ## Description
 
 A very basic terminal-based file picker with two modes, multi-file
-and single-file. It's behavior attempts to mimic both the bash
+and single-file. Its behavior attempts to mimic both the bash
 Tab autocomplete, but also the auto-filtering behavior I saw in 
 the Fresh text editor.
 
