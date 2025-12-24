@@ -23,6 +23,10 @@ objects back in a list.
 from jons_pickers import file_picker
 from jons_pickers import object_picker
 
-my_files = file_picker(start_dir="home/cwd/whatever", multi=True/False)
+my_files = file_picker(
+    start_dir="home/cwd/whatever", 
+    multi=True/False,
+    prompt="File: "
+)
 
 my_objects = object_picker(list_of_objects, multi=True)
