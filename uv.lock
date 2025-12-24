@@ -1,0 +1,20 @@
+version = 1
+revision = 3
+requires-python = ">=3.7"
+
+[[package]]
+name = "cursor"
+version = "1.3.5"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/59/1b/ae231e1f9a8e1f970453f92fcb20a3fce87fa38753915477c26bc1655d86/cursor-1.3.5.tar.gz", hash = "sha256:6758cae6ac14765ec85d9ce3f14fcb98fff5045f06d8398f1e8da8ce3acd2f20", size = 15666, upload-time = "2022-06-15T12:39:56.774Z" }
+
+[[package]]
+name = "jons-pickers"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "cursor" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "cursor" }]

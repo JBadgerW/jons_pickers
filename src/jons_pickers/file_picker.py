@@ -2,9 +2,8 @@ import curses
 from time import sleep
 from pathlib import Path
 
-PROMPT = "File: "
 
-def _file_picker_ui(stdscr, start_dir, multi):
+def _file_picker_ui(stdscr, start_dir, multi, prompt):
     """Internal curses UI function."""
     def first_match_index():
         for i, (p, _) in enumerate(display):
@@ -21,6 +20,10 @@ def _file_picker_ui(stdscr, start_dir, multi):
 
     stdscr.bkgd(" ", curses.color_pair(1))
     stdscr.clear()
+    
+    # Draw border
+    h, w = stdscr.getmaxyx()
+    stdscr.border()
 
     # --- Initialize cwd ---
     cwd = Path(start_dir).expanduser() if start_dir else Path.cwd()
@@ -61,8 +64,8 @@ def _file_picker_ui(stdscr, start_dir, multi):
 
         # --- Layout ---
         h, w = stdscr.getmaxyx()
-        list_top = 2
-        max_rows = h - list_top - 1
+        list_top = 3  # Account for border
+        max_rows = h - list_top - 2  # Account for top and bottom border
 
         if selected_idx < scroll:
             scroll = selected_idx
@@ -71,11 +74,15 @@ def _file_picker_ui(stdscr, start_dir, multi):
 
         visible = display[scroll : scroll + max_rows]
 
+        # Redraw border
+        stdscr.border()
+
         # --- Draw prompt only if query changed ---
         if query != prev_query or prev_selected_idx is None:
-            stdscr.move(0, 0)
+            stdscr.move(1, 1)
             stdscr.clrtoeol()
-            stdscr.addstr(0, 0, f"{PROMPT}{cwd}/{query}")
+            prompt_line = f"{prompt}{cwd}/{query}"
+            stdscr.addstr(1, 1, prompt_line[:w-2])  # Truncate to fit inside border
             prev_query = query
 
         # --- Draw file list ---
@@ -92,21 +99,21 @@ def _file_picker_ui(stdscr, start_dir, multi):
             if idx == selected_idx or (multi and full_path in selected):
                 attrs |= curses.A_REVERSE
 
-            stdscr.move(y, 2)
+            stdscr.move(y, 3)  # Indent for border
             stdscr.clrtoeol()
-            stdscr.addstr(y, 2, line, attrs)
+            stdscr.addstr(y, 3, line, attrs)
 
         # Clear unused rows
         for y in range(list_top + len(visible), list_top + max_rows):
-            stdscr.move(y, 0)
+            stdscr.move(y, 1)
             stdscr.clrtoeol()
 
         stdscr.noutrefresh()
         curses.doupdate()  # update all at once
 
         # Keep cursor at input (clamped to terminal width)
-        cursor_x = len(PROMPT) + len(str(cwd)) + len(query) + 1
-        stdscr.move(0, min(cursor_x, w - 1))
+        cursor_x = 1 + len(prompt) + len(str(cwd)) + len(query) + 1
+        stdscr.move(1, min(cursor_x, w - 2))
 
         key = stdscr.get_wch()
 
@@ -182,18 +189,19 @@ def _file_picker_ui(stdscr, start_dir, multi):
             scroll = 0
 
 
-def file_picker(start_dir=None, multi=False):
+def file_picker(start_dir=None, multi=False, prompt="File: "):
     """
     Launch an interactive file picker.
     
     Args:
         start_dir: Starting directory (default: current directory)
         multi: Allow multiple file selection with spacebar (default: False)
+        prompt: Informing prompt before the path.
     
     Returns:
         List of selected file paths as strings, or None if cancelled
     """
-    return curses.wrapper(_file_picker_ui, start_dir, multi)
+    return curses.wrapper(_file_picker_ui, start_dir, multi, prompt)
 
 
 if __name__ == "__main__":
