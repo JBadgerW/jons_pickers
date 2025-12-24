@@ -1,5 +1,5 @@
-Jon's File and Object Pickers Readme
-====================================
+Jon's File Picker and Object Picker Readme
+==========================================
 
 ## Description
 
