@@ -208,8 +208,14 @@ def file_picker(start_dir=None, multi=False, prompt="File: "):
     return curses.wrapper(_file_picker_ui, start_dir, multi, prompt)
 
 
-if "__name__" == "__main__":
-    picked_files = file_picker(
-        "~",
-        multi=True
-    )
+if __name__ == "__main__":
+
+    # Single file picker
+    print("SINGLE FILE PICKER")
+    result = file_picker("~", multi=False)
+    print(result)
+
+    # Multi file picker
+    print("\nMULTI FILE PICKER")
+    result = file_picker("~", multi=True)
+    print(result)
