@@ -5,13 +5,13 @@ Jon's File Picker and Object Picker Readme
 
 A very basic terminal-based file picker with two modes, multi-file
 and single-file. Its behavior attempts to mimic both the bash
-Tab autocomplete, but also the auto-filtering behavior I saw in 
+Tab autocomplete and also the auto-filtering behavior I saw in 
 the Fresh text editor.
 
 ## File Picker vs Object Picker
 
 There are two different functions available: file_picker and 
-object_picker. The first transverses a file system and allows you
+object_picker. The first traverses a file system and allows you
 to pick a file/files which it returns in a list.
 
 The other one, object_picker, takes a list of objects and allows
