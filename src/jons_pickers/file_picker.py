@@ -6,6 +6,12 @@ from pathlib import Path
 def _file_picker_ui(stdscr, start_dir, multi, prompt):
     """Internal curses UI function."""
     def first_match_index():
+        # Special case: if query is exactly "..", prioritize the parent directory
+        if query == "..":
+            for i, (p, _, is_match) in enumerate(display):
+                if p.name == ".." and is_match:
+                    return i
+        # Otherwise, find first match that isn't ".."
         for i, (p, _, is_match) in enumerate(display):
             if is_match and p.name != "..":
                 return i
