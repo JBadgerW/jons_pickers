@@ -213,12 +213,12 @@ if __name__ == "__main__":
 
     # Single file picker
     print("SINGLE FILE PICKER")
-    result = file_picker("/home/jon/GitHub", multi=False)
+    result = file_picker("~", multi=False)
     print(result)
     sleep(2)
 
     # Multi file picker
     print("\nMULTI FILE PICKER")
-    result = file_picker("/home/jon/GitHub", multi=True)
+    result = file_picker("~", multi=True)
     print(result)
     sleep(2)
