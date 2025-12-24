@@ -7,7 +7,7 @@ def _file_picker_ui(stdscr, start_dir, multi, prompt):
     """Internal curses UI function."""
     def first_match_index():
         for i, (p, _, is_match) in enumerate(display):
-            if is_match:
+            if is_match and p.name != "..":
                 return i
         return 0
 
@@ -55,14 +55,24 @@ def _file_picker_ui(stdscr, start_dir, multi, prompt):
 
         # Build display with match status
         display = []
+        parent_entry = None
         if cwd.parent != cwd:
-            display.append((Path(".."), True, True))  # (path, is_dir, is_match)
+            parent_matches = ".." if query else True  # Only match if query is ".."
+            if query:
+                parent_matches = matches("..")
+            else:
+                parent_matches = True
+            parent_entry = (Path(".."), True, parent_matches)
         
         # Separate matches and non-matches
         matching_dirs = [(p, True, True) for p in dirs if matches(p.name)]
         matching_files = [(p, False, True) for p in files if matches(p.name)]
         non_matching_dirs = [(p, True, False) for p in dirs if not matches(p.name)]
         non_matching_files = [(p, False, False) for p in files if not matches(p.name)]
+        
+        # Add parent at the beginning
+        if parent_entry:
+            display.append(parent_entry)
         
         # Matches first, then non-matches
         display += matching_dirs + matching_files + non_matching_dirs + non_matching_files
