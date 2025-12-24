@@ -42,10 +42,11 @@ def _file_picker_ui(stdscr, start_dir, multi, prompt):
 
     query = ""
     selected_idx = 0
-    selected = set()   # only used in multi mode
+    selected = set()   # persistent set of selected file paths
     scroll = 0
     prev_selected_idx = None
     prev_query = None
+    prev_selected_count = None
 
     while True:
         # --- Prepare display ---
@@ -89,6 +90,16 @@ def _file_picker_ui(stdscr, start_dir, multi, prompt):
 
         # --- Layout ---
         h, w = stdscr.getmaxyx()
+        
+        # Calculate split: 65% for file browser, 35% for selected list in multi mode
+        if multi:
+            split_col = int(w * 0.65)
+            browser_width = split_col - 1
+            selected_width = w - split_col - 1
+        else:
+            browser_width = w - 2
+            selected_width = 0
+        
         list_top = 3  # Account for border
         max_rows = h - list_top - 2  # Account for top and bottom border
 
@@ -101,13 +112,18 @@ def _file_picker_ui(stdscr, start_dir, multi, prompt):
 
         # Redraw border
         stdscr.border()
+        
+        # Draw vertical separator in multi mode
+        if multi:
+            for y in range(1, h - 1):
+                stdscr.addch(y, split_col, curses.ACS_VLINE)
 
         # --- Draw prompt only if query changed ---
         if query != prev_query or prev_selected_idx is None:
             stdscr.move(1, 1)
             stdscr.clrtoeol()
             prompt_line = f"{prompt}{cwd}/{query}"
-            stdscr.addstr(1, 1, prompt_line[:w-2])  # Truncate to fit inside border
+            stdscr.addstr(1, 1, prompt_line[:browser_width-1])  # Truncate to fit
             prev_query = query
 
         # --- Draw file list ---
@@ -116,7 +132,7 @@ def _file_picker_ui(stdscr, start_dir, multi, prompt):
             idx = scroll + i
 
             name = path.name + ("/" if is_dir else "")
-            line = name[: w - 4]
+            line = name[: browser_width - 3]
 
             full_path = (cwd / path).resolve()
             is_selected = multi and full_path in selected
@@ -143,21 +159,52 @@ def _file_picker_ui(stdscr, start_dir, multi, prompt):
                 attrs |= curses.A_REVERSE
 
             stdscr.move(y, 3)  # Indent for border
-            # Clear line but preserve border
-            stdscr.addstr(y, 3, " " * (w - 4))
+            # Clear line but preserve border/separator
+            stdscr.addstr(y, 3, " " * (browser_width - 3))
             stdscr.addstr(y, 3, line, attrs)
 
-        # Clear unused rows
+        # Clear unused rows in browser pane
         for y in range(list_top + len(visible), list_top + max_rows):
             stdscr.move(y, 1)
-            stdscr.addstr(y, 1, " " * (w - 2))
+            stdscr.addstr(y, 1, " " * (browser_width - 1))
+
+        # --- Draw selected files pane (multi mode only) ---
+        if multi:
+            # Draw header only if selection count changed
+            if len(selected) != prev_selected_count or prev_selected_count is None:
+                header = f"Selected ({len(selected)})"
+                stdscr.move(1, split_col + 2)
+                stdscr.clrtoeol()
+                stdscr.addstr(1, split_col + 2, header[:selected_width - 3])
+                
+                # Add help text
+                help_text = "Ctrl+C: clear"
+                stdscr.move(2, split_col + 2)
+                stdscr.clrtoeol()
+                stdscr.addstr(2, split_col + 2, help_text[:selected_width - 3], curses.color_pair(3))
+                
+                prev_selected_count = len(selected)
+            
+            # Draw selected files list
+            selected_list = sorted([Path(p).name for p in selected])
+            for i, filename in enumerate(selected_list[:max_rows]):
+                y = list_top + i
+                truncated = filename[:selected_width - 3]
+                stdscr.move(y, split_col + 2)
+                stdscr.clrtoeol()
+                stdscr.addstr(y, split_col + 2, truncated)
+            
+            # Clear remaining rows in selected pane
+            for y in range(list_top + len(selected_list[:max_rows]), list_top + max_rows):
+                stdscr.move(y, split_col + 1)
+                stdscr.clrtoeol()
 
         stdscr.noutrefresh()
         curses.doupdate()  # update all at once
 
         # Keep cursor at input (clamped to terminal width)
         cursor_x = 1 + len(prompt) + len(str(cwd)) + len(query) + 1
-        stdscr.move(1, min(cursor_x, w - 2))
+        stdscr.move(1, min(cursor_x, browser_width - 1))
 
         key = stdscr.get_wch()
 
@@ -169,6 +216,10 @@ def _file_picker_ui(stdscr, start_dir, multi, prompt):
             selected_idx -= 1
         elif key == curses.KEY_DOWN and selected_idx < len(display) - 1:
             selected_idx += 1
+
+        elif key == '\x03' and multi:  # Ctrl+C: clear selections
+            selected.clear()
+            prev_selected_count = None  # Force redraw of header
 
         elif key == '\t':  # TAB autocomplete (bash-style)
             names = [p.name for p, _, is_match in display if p.name != ".." and is_match]
@@ -206,7 +257,7 @@ def _file_picker_ui(stdscr, start_dir, multi, prompt):
                 query = ""
                 selected_idx = 0
                 scroll = 0
-                selected.clear()
+                # Don't clear selected files when navigating directories
             else:
                 if multi:
                     # Always include the currently highlighted file
@@ -217,13 +268,14 @@ def _file_picker_ui(stdscr, start_dir, multi, prompt):
                     return [str(target)]
 
         elif key == " " and multi:  # toggle selection
-            path, is_dir, is_match = display[selected_idx]
+            path, is_dir = display[selected_idx][:2]
             if not is_dir:
                 target = (cwd / path).resolve()
                 if target in selected:
                     selected.remove(target)
                 else:
                     selected.add(target)
+                prev_selected_count = None  # Force redraw
 
         elif key in (curses.KEY_BACKSPACE, "\b", "\x7f"):
             query = query[:-1]
@@ -243,6 +295,15 @@ def file_picker(start_dir=None, multi=False, prompt="File: "):
     Args:
         start_dir: Starting directory (default: current directory)
         multi: Allow multiple file selection with spacebar (default: False)
+        prompt: Prompt text to display (default: "File: ")
+    
+    Controls:
+        Arrow keys: Navigate
+        Enter: Select file(s) or enter directory
+        Space: Toggle file selection (multi mode)
+        Tab: Autocomplete
+        Ctrl+C: Clear all selections (multi mode)
+        Esc: Cancel
     
     Returns:
         List of selected file paths as strings, or None if cancelled
