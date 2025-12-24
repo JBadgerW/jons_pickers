@@ -1,7 +1,5 @@
 import curses
 
-PROMPT = "Select: "
-
 
 def _object_picker_ui(stdscr, objects, multi, prompt):
     def first_match_index():
@@ -173,4 +171,5 @@ if __name__ == "__main__":
     ]
 
     picked = object_picker(things, multi=True)
-    print(picked)
+    for object in picked:
+        print(str(object))
