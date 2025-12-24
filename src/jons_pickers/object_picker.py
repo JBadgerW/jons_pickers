@@ -1,5 +1,7 @@
 import curses
 
+PROMPT = "Select: "
+
 
 def _object_picker_ui(stdscr, objects, multi, prompt):
     def first_match_index():
@@ -41,9 +43,12 @@ def _object_picker_ui(stdscr, objects, multi, prompt):
             selected_idx = max(0, len(display) - 1)
 
         h, w = stdscr.getmaxyx()
-        content_width = w - 4 # 1 for left border, 1 for right border, padding
+
+        # Interior layout (safe from borders)
         list_top = 3
         max_rows = h - list_top - 2
+        content_x = 3
+        content_width = w - content_x - 1  # never touches right border
 
         if selected_idx < scroll:
             scroll = selected_idx
@@ -57,11 +62,15 @@ def _object_picker_ui(stdscr, objects, multi, prompt):
         # --- Prompt ---
         if query != prev_query:
             stdscr.move(1, 1)
-            stdscr.clrtoeol()
-            stdscr.addstr(1, 1, f"{prompt}{query}"[: w - 3])
+            stdscr.addstr(1, 1, " " * (w - 3))
+            stdscr.addstr(
+                1,
+                1,
+                f"{prompt}{query}"[: w - 3]
+            )
             prev_query = query
 
-        # --- Draw list ---
+        # --- Draw object list ---
         for i, (obj, is_match) in enumerate(visible):
             y = list_top + i
             idx = scroll + i
@@ -77,20 +86,19 @@ def _object_picker_ui(stdscr, objects, multi, prompt):
             if idx == selected_idx:
                 attrs |= curses.A_REVERSE
 
-            stdscr.move(y, 3)
-            stdscr.addstr(y, 3, " " * content_width)
-            stdscr.addstr(y, 3, text, attrs)
+            stdscr.addstr(y, content_x, " " * content_width)
+            stdscr.addstr(y, content_x, text, attrs)
 
-        # Clear unused rows
+        # --- Clear unused rows (bounded, border-safe) ---
         for y in range(list_top + len(visible), list_top + max_rows):
-            stdscr.move(y, 1)
-            stdscr.clrtoeol()
+            stdscr.addstr(y, content_x, " " * content_width)
 
         stdscr.noutrefresh()
         curses.doupdate()
 
-        # Cursor at input
-        stdscr.move(1, min(len(prompt) + len(query) + 1, w - 2))
+        # --- Cursor placement (never on border) ---
+        cursor_x = min(len(prompt) + len(query) + 1, w - 3)
+        stdscr.move(1, cursor_x)
 
         key = stdscr.get_wch()
 
@@ -165,5 +173,4 @@ if __name__ == "__main__":
     ]
 
     picked = object_picker(things, multi=True)
-    for object in picked:
-        print(str(object))
+    print(picked)
