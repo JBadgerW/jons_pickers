@@ -6,8 +6,8 @@ from pathlib import Path
 def _file_picker_ui(stdscr, start_dir, multi, prompt):
     """Internal curses UI function."""
     def first_match_index():
-        for i, (p, _, _) in enumerate(display):
-            if p.name != "..":
+        for i, (p, _, is_match) in enumerate(display):
+            if is_match:
                 return i
         return 0
 
