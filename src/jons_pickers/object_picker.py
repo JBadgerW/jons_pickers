@@ -41,6 +41,7 @@ def _object_picker_ui(stdscr, objects, multi, prompt):
             selected_idx = max(0, len(display) - 1)
 
         h, w = stdscr.getmaxyx()
+        content_width = w - 4 # 1 for left border, 1 for right border, padding
         list_top = 3
         max_rows = h - list_top - 2
 
@@ -57,7 +58,7 @@ def _object_picker_ui(stdscr, objects, multi, prompt):
         if query != prev_query:
             stdscr.move(1, 1)
             stdscr.clrtoeol()
-            stdscr.addstr(1, 1, f"{prompt}{query}"[: w - 2])
+            stdscr.addstr(1, 1, f"{prompt}{query}"[: w - 3])
             prev_query = query
 
         # --- Draw list ---
@@ -65,7 +66,7 @@ def _object_picker_ui(stdscr, objects, multi, prompt):
             y = list_top + i
             idx = scroll + i
 
-            text = str(obj)[: w - 6]
+            text = str(obj)[:content_width]
             attrs = 0
 
             if multi and obj in selected:
@@ -77,7 +78,7 @@ def _object_picker_ui(stdscr, objects, multi, prompt):
                 attrs |= curses.A_REVERSE
 
             stdscr.move(y, 3)
-            stdscr.addstr(y, 3, " " * (w - 6))
+            stdscr.addstr(y, 3, " " * content_width)
             stdscr.addstr(y, 3, text, attrs)
 
         # Clear unused rows
