@@ -1,4 +1,5 @@
 import curses
+from typing import List, Any, Optional
 
 
 def _object_picker_ui(stdscr, objects, multi, prompt):
@@ -137,7 +138,7 @@ def _object_picker_ui(stdscr, objects, multi, prompt):
             scroll = 0
 
 
-def object_picker(objects, multi=True, prompt="Select: "):
+def object_picker(objects, multi=True, prompt="Select: ")-> Optional[List[Any]] | None:
     """
     Launch an interactive object picker.
 

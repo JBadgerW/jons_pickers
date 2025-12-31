@@ -10,7 +10,7 @@ sdist = { url = "https://files.pythonhosted.org/packages/59/1b/ae231e1f9a8e1f970
 
 [[package]]
 name = "jons-pickers"
-version = "0.1.8"
+version = "0.1.9"
 source = { editable = "." }
 dependencies = [
     { name = "cursor" },
